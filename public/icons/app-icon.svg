@@ -17,7 +17,7 @@
   <line x1="140" y1="340" x2="436" y2="340" stroke="#E0D9C8" stroke-width="3"/>
 
   <!-- Devanagari 'ह' (Hishob) -->
-  <text x="288" y="275" font-family="'Noto Sans Devanagari', sans-serif" font-size="160" font-weight="900" fill="#0F766E" text-anchor="middle" dominant-baseline="middle">ह</text>
+  <text x="288" y="275" font-family="'Tiro Devanagari Marathi', 'Noto Sans Devanagari', sans-serif" font-size="160" font-weight="900" fill="#0F766E" text-anchor="middle" dominant-baseline="middle">ह</text>
   
   <!-- Rupee Symbol -->
   <circle cx="370" cy="355" r="42" fill="#15803D"/>

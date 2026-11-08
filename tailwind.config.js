@@ -56,8 +56,8 @@ export default {
         }
       },
       fontFamily: {
-        devanagari: ['"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
-        sans: ['Inter', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
+        devanagari: ['"Tiro Devanagari Marathi"', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
+        sans: ['Inter', '"Tiro Devanagari Marathi"', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
       },
       minHeight: {
         'tap': '56px',

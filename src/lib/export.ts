@@ -126,11 +126,11 @@ export function printReportPDF(
 <head>
   <meta charset="UTF-8">
   <title>${title} - ${periodLabel}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Tiro+Devanagari+Marathi:ital@0;1&display=swap" rel="stylesheet">
   <style>
     @page { size: A4 portrait; margin: 15mm; }
     body {
-      font-family: 'Noto Sans Devanagari', Inter, sans-serif;
+      font-family: 'Tiro Devanagari Marathi', 'Noto Sans Devanagari', Inter, sans-serif;
       color: #1F2430;
       background: #FFFFFF;
       margin: 0;
@@ -321,11 +321,11 @@ export function printPersonStatementPDF(
 <head>
   <meta charset="UTF-8">
   <title>हिशोब पत्रक - ${person.name}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Tiro+Devanagari+Marathi:ital@0;1&display=swap" rel="stylesheet">
   <style>
     @page { size: A4 portrait; margin: 15mm; }
     body {
-      font-family: 'Noto Sans Devanagari', Inter, sans-serif;
+      font-family: 'Tiro Devanagari Marathi', 'Noto Sans Devanagari', Inter, sans-serif;
       color: #1F2430;
       background: #FFFFFF;
       margin: 0;
