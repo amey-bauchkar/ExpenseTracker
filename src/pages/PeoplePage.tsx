@@ -11,6 +11,9 @@ import {
   ArrowLeft,
   Phone,
   X,
+  MessageCircle,
+  Share2,
+  Check,
 } from 'lucide-react';
 import {
   Person,
@@ -41,7 +44,7 @@ export const PeoplePage: React.FC<PeoplePageProps> = ({
   onOpenQuickAddWithPerson,
   onSelectTransaction,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const digits = settings.digits;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,6 +59,7 @@ export const PeoplePage: React.FC<PeoplePageProps> = ({
 
   // Write-off confirmation state
   const [writeOffLoanId, setWriteOffLoanId] = useState<string | null>(null);
+  const [copiedReminder, setCopiedReminder] = useState(false);
 
   // Calculate summaries
   const personSummaries = useMemo(() => {
@@ -65,6 +69,30 @@ export const PeoplePage: React.FC<PeoplePageProps> = ({
   const totalPending = useMemo(() => {
     return calculateTotalPendingReceivable(transactions);
   }, [transactions]);
+
+  const getReminderMessage = (psSummary: typeof personSummaries[0]) => {
+    const pendingFormatted = formatCurrency(psSummary.pending_paise, { digits });
+    return i18n.language === 'mr'
+      ? `नमस्कार ${psSummary.person.name} जी,\n\nआपल्या 'डिजिटल हिशोब वही' नोंदीनुसार आपल्याकडील रक्कम ${pendingFormatted} येणे बाकी आहे.\nकृपया आपल्या सोयीनुसार जमा करावी, ही नम्र विनंती.\n\nधन्यवाद!`
+      : `Hello ${psSummary.person.name},\n\nAs per our Digital Hishob-Khata records, your pending balance is ${pendingFormatted}.\nKindly settle this at your convenience.\n\nThank you!`;
+  };
+
+  const handleSendWhatsAppReminder = (psSummary: typeof personSummaries[0]) => {
+    const msg = getReminderMessage(psSummary);
+    const cleanPhone = psSummary.person.phone ? psSummary.person.phone.replace(/[^0-9]/g, '') : '';
+    const phoneParam = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    const url = phoneParam
+      ? `https://wa.me/${phoneParam}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleCopyReminder = (psSummary: typeof personSummaries[0]) => {
+    const msg = getReminderMessage(psSummary);
+    navigator.clipboard.writeText(msg);
+    setCopiedReminder(true);
+    setTimeout(() => setCopiedReminder(false), 2000);
+  };
 
   // Filter person summaries
   const filteredPeople = useMemo(() => {
@@ -233,6 +261,36 @@ export const PeoplePage: React.FC<PeoplePageProps> = ({
             <span>परत मिळाले (Repay)</span>
           </button>
         </div>
+
+        {/* WhatsApp Reminder (when pending amount > 0) */}
+        {ps.pending_paise > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleSendWhatsAppReminder(ps)}
+              className="flex-1 py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all"
+            >
+              <MessageCircle className="w-5 h-5 fill-current" />
+              <span>व्हॉट्सअ‍ॅपवर आठवण मेसेज पाठवा</span>
+            </button>
+            <button
+              onClick={() => handleCopyReminder(ps)}
+              title="मेसेज मजकूर कॉपी करा"
+              className="px-4 py-3.5 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all shadow-2xs"
+            >
+              {copiedReminder ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span>कॉपी झाले!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span>कॉपी</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Loan Breakdown */}
         <div>

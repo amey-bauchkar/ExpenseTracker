@@ -30,3 +30,14 @@ export class HishobKhataDatabase extends Dexie {
 }
 
 export const db = new HishobKhataDatabase();
+
+// Request persistent storage from the browser to prevent automatic cache eviction
+if (typeof window !== 'undefined' && navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().then((isPersisted) => {
+    if (isPersisted) {
+      console.log('IndexedDB persistent storage granted: Dad\'s ledger is safe from browser eviction.');
+    }
+  }).catch((err) => {
+    console.warn('Storage persist request notice:', err);
+  });
+}
