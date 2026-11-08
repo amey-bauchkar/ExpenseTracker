@@ -15,6 +15,8 @@ import {
   RotateCcw,
   Sun,
   Moon,
+  Cloud,
+  RefreshCw,
 } from 'lucide-react';
 import {
   Account,
@@ -75,6 +77,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   // Backup restore notification
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const [cloudBackupStatus, setCloudBackupStatus] = useState<'idle' | 'uploading' | 'restoring'>('idle');
+  const [lastCloudBackupTime, setLastCloudBackupTime] = useState<string | null>(
+    localStorage.getItem('cf_last_cloud_backup')
+  );
 
   useEffect(() => {
     if (activeSection === 'trash') {
@@ -187,6 +193,57 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       }
     };
     reader.readAsText(file);
+  };
+
+  // Cloudflare Cloud Backup
+  const handleCloudflareBackup = async () => {
+    try {
+      setCloudBackupStatus('uploading');
+      const jsonStr = await syncEngine.exportFullBackupJSON();
+      const res = await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: jsonStr,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Cloudflare backup failed');
+      }
+      const nowStr = new Date().toLocaleString('mr-IN');
+      localStorage.setItem('cf_last_cloud_backup', nowStr);
+      setLastCloudBackupTime(nowStr);
+      setBackupMessage(`Cloudflare क्लाउडवर डेटा सुरक्षित सेव्ह झाला! (${nowStr})`);
+    } catch (err: any) {
+      alert('Cloudflare क्लाउड बॅकअपमध्ये अडचण आली: ' + err.message);
+    } finally {
+      setCloudBackupStatus('idle');
+    }
+  };
+
+  // Cloudflare Cloud Restore
+  const handleCloudflareRestore = async () => {
+    if (!confirm('आपण Cloudflare क्लाउडवरील शेवटचा बॅकअप रिस्टोअर करू इच्छिता का?')) return;
+    try {
+      setCloudBackupStatus('restoring');
+      const res = await fetch('/api/backup');
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.backup?.data) {
+        throw new Error(data.message || data.error || 'No cloud backup found');
+      }
+      const rawData =
+        typeof data.backup.data === 'string'
+          ? data.backup.data
+          : JSON.stringify(data.backup.data);
+      const restoreRes = await syncEngine.restoreFromBackupJSON(rawData);
+      setBackupMessage(
+        `Cloudflare क्लाउडवरून यशस्वी रिस्टोअर! (${restoreRes.stats.transactions} व्यवहार, ${restoreRes.stats.people} व्यक्ती परत आले)`
+      );
+      onRefreshData();
+    } catch (err: any) {
+      alert('Cloudflare वरून डेटा रिस्टोअर करताना अडचण आली: ' + err.message);
+    } finally {
+      setCloudBackupStatus('idle');
+    }
   };
 
   // Restore item from Trash
@@ -632,6 +689,56 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* ----------------- SECTION 4: BACKUP & RESTORE ----------------- */}
       {activeSection === 'backup' && (
         <div className="space-y-4">
+          {/* Cloudflare Cloud Storage Card */}
+          <div className="p-4 bg-gradient-to-br from-amber-500/10 via-teal-500/10 to-blue-500/10 dark:from-amber-950/30 dark:to-teal-950/30 rounded-2xl border border-amber-300 dark:border-amber-700/60 space-y-3 shadow-xs">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-sm font-black text-[#1F2430] dark:text-[#E6EDF3] flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-amber-600" />
+                  <span>Cloudflare क्लाउड बॅकअप (Cloudflare Cloud)</span>
+                </h3>
+                <p className="text-xs text-[#5B6372] dark:text-[#8B949E] mt-1 leading-relaxed">
+                  आपल्या Cloudflare खात्यावर (KV & D1 Storage) सर्व खाती, उधारी व नोंदी एका क्लिकवर सेव्ह करा. फोन खराब किंवा चोरी झाल्यास एका सेकंदात सर्व डेटा परत मिळतो.
+                </p>
+                {lastCloudBackupTime && (
+                  <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                    ✓ शेवटचा क्लाउड बॅकअप: {lastCloudBackupTime}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCloudflareBackup}
+                disabled={cloudBackupStatus !== 'idle'}
+                className="py-3 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+              >
+                {cloudBackupStatus === 'uploading' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Cloud className="w-4 h-4" />
+                )}
+                <span>क्लाउडवर सेव्ह करा</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCloudflareRestore}
+                disabled={cloudBackupStatus !== 'idle'}
+                className="py-3 px-3 rounded-xl bg-white dark:bg-[#1D2128] border border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 hover:bg-amber-50 active:scale-95 font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all disabled:opacity-50"
+              >
+                {cloudBackupStatus === 'restoring' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4 text-amber-600" />
+                )}
+                <span>क्लाउडवरून आणा</span>
+              </button>
+            </div>
+          </div>
+
           <div className="p-4 bg-white dark:bg-[#1D2128] rounded-2xl border border-[#E7E1D3] dark:border-[#2E3541] space-y-3">
             <h3 className="text-sm font-extrabold text-[#1F2430] dark:text-[#E6EDF3] flex items-center gap-2">
               <Download className="w-4 h-4 text-teal-700" />
