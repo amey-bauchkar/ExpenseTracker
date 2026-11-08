@@ -122,22 +122,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* 2. Available Balance Card */}
       <div
         onClick={() => setShowAccountsBreakdown(!showAccountsBreakdown)}
-        className="p-5 rounded-3xl bg-linear-to-br from-teal-800 via-teal-900 to-slate-900 text-white shadow-xl cursor-pointer relative overflow-hidden active:scale-[0.99] transition-transform"
+        className="p-5 rounded-3xl bg-teal-900 bg-gradient-to-br from-teal-800 via-teal-900 to-slate-900 text-white shadow-xl cursor-pointer relative overflow-hidden active:scale-[0.99] transition-transform border border-teal-700/50"
       >
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-teal-200/90">
+          <span className="text-xs font-bold uppercase tracking-wider text-teal-200">
             {t('dashboard.availableBalance')}
           </span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-teal-700/60 text-teal-100 border border-teal-500/30">
-            {showAccountsBreakdown ? 'बंद करा' : 'खातेनिहाय ▼'}
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-800 text-teal-100 border border-teal-600/50 shadow-xs">
+            {showAccountsBreakdown ? 'बंद करा ▲' : 'खातेनिहाय ▼'}
           </span>
         </div>
 
-        <div className="text-4xl sm:text-5xl font-black tracking-tight my-1">
+        <div className="text-4xl sm:text-5xl font-black tracking-tight my-1 text-white">
           {formatCurrency(summary.available_balance_paise, { digits })}
         </div>
 
-        <div className="text-xs text-teal-200/80 mt-2 flex items-center gap-1.5">
+        <div className="text-xs font-medium text-teal-200 mt-2 flex items-center gap-1.5">
           <Wallet className="w-4 h-4 text-teal-300" />
           <span>{accounts.filter((a) => !a.archived_at).length} सक्रिय खाती (Cash, Bank, UPI)</span>
         </div>

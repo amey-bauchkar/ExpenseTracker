@@ -169,7 +169,7 @@ export const PeoplePage: React.FC<PeoplePageProps> = ({
         </div>
 
         {/* Person Summary Card */}
-        <div className="p-5 rounded-3xl bg-linear-to-br from-amber-700 via-amber-800 to-amber-950 text-white shadow-xl">
+        <div className="p-5 rounded-3xl bg-amber-900 bg-gradient-to-br from-amber-700 via-amber-800 to-amber-950 text-white shadow-xl border border-amber-700/50">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-black">{ps.person.name}</h2>
@@ -382,7 +382,7 @@ export const PeoplePage: React.FC<PeoplePageProps> = ({
   return (
     <div className="space-y-4 pb-20 animate-in fade-in duration-200">
       {/* Header Banner: Total Pending to Receive */}
-      <div className="p-5 rounded-3xl bg-linear-to-br from-amber-800 via-amber-900 to-amber-950 text-white shadow-xl flex items-center justify-between">
+      <div className="p-5 rounded-3xl bg-amber-900 bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 text-white shadow-xl flex items-center justify-between border border-amber-700/50">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-amber-200">
             {t('people.totalPending')}
