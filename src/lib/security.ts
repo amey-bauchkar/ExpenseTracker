@@ -26,3 +26,4 @@ export async function verifyPin(
   const computed = await hashPin(pin, salt);
   return computed === expectedHash;
 }
+

@@ -134,3 +134,4 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
     </div>
   );
 };
+

@@ -17,7 +17,9 @@ import {
   Moon,
   Cloud,
   RefreshCw,
+  Lock,
 } from 'lucide-react';
+import { generateSalt, hashPin, verifyPin } from '../lib/security';
 import {
   Account,
   Category,
@@ -118,6 +120,72 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       document.documentElement.classList.remove('dark');
     }
     onRefreshData();
+  };
+
+  // PIN Setup Modal state
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [confirmPinInput, setConfirmPinInput] = useState('');
+  const [pinStep, setPinStep] = useState<'enter' | 'confirm' | 'verify_remove'>('enter');
+  const [pinModalError, setPinModalError] = useState('');
+
+  const handleTogglePinLock = () => {
+    setPinModalError('');
+    setPinInput('');
+    setConfirmPinInput('');
+    if (settings.is_pin_enabled) {
+      setPinStep('verify_remove');
+    } else {
+      setPinStep('enter');
+    }
+    setShowPinModal(true);
+  };
+
+  const handleSavePin = async () => {
+    if (pinStep === 'enter') {
+      if (pinInput.length !== 4 || !/^\d{4}$/.test(pinInput)) {
+        setPinModalError('कृपया 4-अंकी अचूक PIN टाका.');
+        return;
+      }
+      setPinStep('confirm');
+      setPinModalError('');
+      return;
+    }
+
+    if (pinStep === 'confirm') {
+      if (pinInput !== confirmPinInput) {
+        setPinModalError('दोन्ही PIN जुळत नाहीत! कृपया पुन्हा टाका.');
+        return;
+      }
+      const salt = generateSalt();
+      const hash = await hashPin(pinInput, salt);
+      await updateUserSettings(DEFAULT_USER_ID, {
+        is_pin_enabled: true,
+        pin_hash: hash,
+        pin_salt: salt,
+      });
+      setShowPinModal(false);
+      onRefreshData();
+      alert('सुरक्षा PIN यशस्वीरित्या चालू झाला!');
+      return;
+    }
+
+    if (pinStep === 'verify_remove') {
+      if (!settings.pin_hash || !settings.pin_salt) return;
+      const isCorrect = await verifyPin(pinInput, settings.pin_salt, settings.pin_hash);
+      if (!isCorrect) {
+        setPinModalError('चुकीचा PIN! सुरक्षा लॉक बंद करता आले नाही.');
+        return;
+      }
+      await updateUserSettings(DEFAULT_USER_ID, {
+        is_pin_enabled: false,
+        pin_hash: null,
+        pin_salt: null,
+      });
+      setShowPinModal(false);
+      onRefreshData();
+      alert('सुरक्षा PIN लॉक बंद करण्यात आला आहे.');
+    }
   };
 
   // Handle Add Account
@@ -425,6 +493,39 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   {item.label} ({item.scale}%)
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* App Security PIN Lock Card */}
+          <div className="p-4 bg-white dark:bg-[#1D2128] rounded-2xl border border-[#E7E1D3] dark:border-[#2E3541] space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#1F2430] dark:text-[#E6EDF3]">
+                    {t('settings.appLock', 'अ‍ॅप लॉक (सुरक्षा PIN)')}
+                  </div>
+                  <div className="text-[11px] text-[#5B6372] dark:text-[#8B949E]">
+                    {settings.is_pin_enabled
+                      ? '✓ सुरक्षा लॉक चालू आहे (PIN Protected)'
+                      : 'अ‍ॅप उघडण्यासाठी 4-अंकी PIN आवश्यक करा'}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTogglePinLock}
+                className={`px-3 py-2 rounded-xl font-bold text-xs active:scale-95 transition-all ${
+                  settings.is_pin_enabled
+                    ? 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 hover:bg-rose-200'
+                    : 'bg-teal-700 hover:bg-teal-800 text-white shadow-sm'
+                }`}
+              >
+                {settings.is_pin_enabled ? 'PIN बंद करा' : 'PIN सेट करा'}
+              </button>
             </div>
           </div>
         </div>
@@ -921,6 +1022,84 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* PIN Setup / Verification Modal */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1D2128] rounded-3xl p-5 w-full max-w-sm border border-[#E7E1D3] dark:border-[#2E3541] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-[#1F2430] dark:text-[#E6EDF3] flex items-center gap-2">
+                <Lock className="w-5 h-5 text-teal-700" />
+                <span>
+                  {pinStep === 'verify_remove'
+                    ? 'सध्याचा PIN टाका'
+                    : pinStep === 'confirm'
+                    ? 'PIN ची खात्री करा'
+                    : 'नवीन 4-अंकी PIN टाका'}
+                </span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowPinModal(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-[#5B6372] leading-relaxed">
+              {pinStep === 'verify_remove'
+                ? 'सुरक्षा PIN बंद करण्यासाठी आपला सध्याचा 4-अंकी PIN टाका.'
+                : pinStep === 'confirm'
+                ? 'कृपया खात्री करण्यासाठी तोच 4-अंकी PIN पुन्हा टाका.'
+                : 'अ‍ॅप उघडताना विचारला जाणारा 4-अंकी सुरक्षा कोड तयार करा.'}
+            </p>
+
+            <div className="space-y-2">
+              <input
+                type="password"
+                maxLength={4}
+                autoFocus
+                value={pinStep === 'confirm' ? confirmPinInput : pinInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if (pinStep === 'confirm') {
+                    setConfirmPinInput(val);
+                  } else {
+                    setPinInput(val);
+                  }
+                  setPinModalError('');
+                }}
+                placeholder="••••"
+                className="w-full text-center tracking-[0.5em] text-3xl font-black py-3 rounded-2xl border border-teal-600 bg-[#FBF8F1] dark:bg-[#14171C] text-[#1F2430] dark:text-[#E6EDF3] focus:outline-none focus:ring-2 focus:ring-teal-600"
+              />
+
+              {pinModalError && (
+                <div className="text-xs text-rose-600 font-bold text-center">
+                  {pinModalError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowPinModal(false)}
+                className="flex-1 py-3 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
+              >
+                रद्द करा
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePin}
+                className="flex-1 py-3 text-xs font-bold rounded-xl bg-teal-700 hover:bg-teal-800 text-white shadow-sm"
+              >
+                {pinStep === 'enter' ? 'पुढे जा' : pinStep === 'confirm' ? 'PIN जतन करा' : 'PIN काढा'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

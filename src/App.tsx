@@ -14,16 +14,19 @@ import { Navbar } from './components/Navbar';
 import { QuickAddModal } from './components/QuickAddModal';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
 import { UndoToast } from './components/UndoToast';
+import { PinLockScreen } from './components/PinLockScreen';
 import { DashboardPage } from './pages/DashboardPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { PeoplePage } from './pages/PeoplePage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { restoreTransaction, softDeleteTransaction } from './db/repository';
+import { syncEngine } from './sync/syncEngine';
 
 export const App: React.FC = () => {
   const { i18n } = useTranslation();
   const [isDbReady, setIsDbReady] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   // Modal states
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -102,6 +105,9 @@ export const App: React.FC = () => {
       // Revert newly created transaction
       await softDeleteTransaction(tx.id);
     });
+    // Automatically backup to Cloudflare in background
+    syncEngine.triggerDebouncedCloudBackup();
+
     // Auto clear toast after 6 seconds
     setTimeout(() => {
       setToastMessage(null);
@@ -114,10 +120,20 @@ export const App: React.FC = () => {
       // Revert deleted transaction
       await restoreTransaction(tx.id);
     });
+    // Automatically update Cloudflare backup in background
+    syncEngine.triggerDebouncedCloudBackup();
+
     setTimeout(() => {
       setToastMessage(null);
     }, 6000);
   };
+
+  // Automatically check daily cloud backup when database is ready
+  useEffect(() => {
+    if (isDbReady) {
+      syncEngine.autoCheckDailyCloudBackup();
+    }
+  }, [isDbReady]);
 
   if (!isDbReady || !accounts || !categories || !people || !transactions) {
     return (
@@ -129,6 +145,22 @@ export const App: React.FC = () => {
           <p className="font-bold text-sm text-[#5B6372]">हिशोब वही उघडत आहे...</p>
         </div>
       </div>
+    );
+  }
+
+  // App Lock Security Check
+  if (
+    defaultSettings.is_pin_enabled &&
+    defaultSettings.pin_hash &&
+    defaultSettings.pin_salt &&
+    !isUnlocked
+  ) {
+    return (
+      <PinLockScreen
+        pinHash={defaultSettings.pin_hash}
+        pinSalt={defaultSettings.pin_salt}
+        onUnlock={() => setIsUnlocked(true)}
+      />
     );
   }
 

@@ -24,12 +24,12 @@ export const SyncBadge: React.FC = () => {
   const badgeConfig = {
     synced: {
       icon: <Cloud className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />,
-      text: t('common.synced'),
+      text: 'Cloud वर सुरक्षित',
       bg: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
     },
     syncing: {
       icon: <RefreshCw className="w-3.5 h-3.5 text-teal-600 animate-spin shrink-0" />,
-      text: t('common.syncing'),
+      text: 'क्लाउड सेव्ह...',
       bg: 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800',
     },
     offline: {

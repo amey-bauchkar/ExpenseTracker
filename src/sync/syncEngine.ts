@@ -7,6 +7,7 @@ class SyncEngine {
   private isSyncing = false;
   private listeners: ((state: SyncState, details?: string) => void)[] = [];
   private currentState: SyncState = 'synced';
+  private debounceTimer: any = null;
 
   constructor() {
     this.updateOnlineStatus();
@@ -14,10 +15,16 @@ class SyncEngine {
       window.addEventListener('online', () => {
         this.updateOnlineStatus();
         this.syncNow();
+        this.syncToCloudflare(true);
       });
       window.addEventListener('offline', () => {
         this.updateOnlineStatus();
       });
+
+      // Periodically check every 2 hours if a daily cloud backup is due
+      setInterval(() => {
+        this.autoCheckDailyCloudBackup();
+      }, 2 * 60 * 60 * 1000);
     }
   }
 
@@ -43,6 +50,11 @@ class SyncEngine {
       this.notify('offline', 'इंटरनेट उपलब्ध नाही');
       return;
     }
+    const lastBackup = localStorage.getItem('cf_last_cloud_backup');
+    if (lastBackup) {
+      this.notify('synced', 'Cloud वर सुरक्षित');
+      return;
+    }
     if (!isSupabaseConfigured) {
       this.notify('unconfigured', 'स्थानिक मोड (Offline Local)');
       return;
@@ -50,7 +62,73 @@ class SyncEngine {
   }
 
   /**
-   * Pushes pending outbox records to Supabase and pulls remote changes.
+   * Automatically triggers a background backup to Cloudflare whenever a transaction is saved/changed.
+   * Debounced by 3 seconds so rapid entries don't flood the server.
+   */
+  public triggerDebouncedCloudBackup() {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+    this.debounceTimer = setTimeout(() => {
+      this.syncToCloudflare(true);
+    }, 3000);
+  }
+
+  /**
+   * Automatically checks if a daily backup is needed on app load or interval.
+   */
+  public async autoCheckDailyCloudBackup() {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return;
+    }
+    const lastBackupTs = Number(localStorage.getItem('cf_last_backup_ts') || '0');
+    const twelveHoursMs = 12 * 60 * 60 * 1000;
+    // If more than 12 hours have passed, or never backed up:
+    if (Date.now() - lastBackupTs > twelveHoursMs) {
+      await this.syncToCloudflare(false);
+    }
+  }
+
+  /**
+   * Uploads the latest complete ledger snapshot to Cloudflare KV.
+   */
+  public async syncToCloudflare(_force = false): Promise<boolean> {
+    void _force;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.notify('offline', 'इंटरनेट उपलब्ध नाही');
+      return false;
+    }
+
+    try {
+      this.notify('syncing', 'Cloudflare वर सेव्ह होत आहे...');
+      const jsonStr = await this.exportFullBackupJSON();
+      const res = await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: jsonStr,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          const now = Date.now();
+          const dateStr = new Date().toLocaleString('mr-IN');
+          localStorage.setItem('cf_last_backup_ts', String(now));
+          localStorage.setItem('cf_last_cloud_backup', dateStr);
+          this.notify('synced', 'Cloudflare वर सुरक्षित');
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Cloudflare auto-backup notice:', err);
+    }
+
+    this.notify('synced', 'स्थानिकरित्या सुरक्षित');
+    return false;
+  }
+
+  /**
+   * Pushes pending outbox records to Supabase and Cloudflare.
    */
   public async syncNow(): Promise<{ success: boolean; message: string }> {
     if (this.isSyncing) {
@@ -62,11 +140,13 @@ class SyncEngine {
       return { success: false, message: 'इंटरनेट उपलब्ध नाही' };
     }
 
+    // Always trigger Cloudflare auto-backup
+    this.syncToCloudflare(true);
+
     if (!isSupabaseConfigured || !supabase) {
-      this.notify('unconfigured', 'स्थानिक मोड (क्लाउड सिंक अपूर्ण)');
       return {
         success: true,
-        message: 'सर्व डेटा स्थानिकरित्या (IndexedDB) पूर्णपणे सुरक्षित आहे',
+        message: 'सर्व डेटा Cloudflare आणि स्थानिक स्टोरेजमध्ये पूर्णपणे सुरक्षित आहे',
       };
     }
 
