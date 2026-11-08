@@ -797,6 +797,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
       )}
+
+      {/* App Branding Footer */}
+      <div className="pt-8 pb-4 text-center flex flex-col items-center justify-center gap-2 border-t border-[#E7E1D3]/70 dark:border-[#2E3541]/70 mt-6">
+        <img
+          src="/icons/logo.png"
+          alt="Digital Hishob-Khata"
+          className="w-14 h-14 rounded-2xl shadow-md border border-teal-600/25"
+        />
+        <div>
+          <div className="font-bold text-[#1F2430] dark:text-[#E6EDF3] text-sm">
+            डिजिटल हिशोब वही (Digital Hishob-Khata)
+          </div>
+          <div className="text-xs text-[#5B6372] dark:text-[#8B949E] mt-0.5">
+            आवृत्ती v1.0.0 • कौटुंबिक हिशोब नोंदवही • १००% स्थानिक व सुरक्षित
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

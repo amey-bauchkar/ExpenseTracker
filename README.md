@@ -2,9 +2,11 @@
 
 <div align="center">
 
-![Digital Hishob-Khata Banner](public/icons/app-icon.svg)
+<img src="public/icons/logo.png" width="130" height="130" alt="Digital Hishob-Khata Logo" style="border-radius: 26px; box-shadow: 0 10px 25px rgba(15,118,110,0.25);" />
 
-### **सोपी, विश्वासू आणि आधुनिक कौटुंबिक हिशोब नोंदवही**
+# **डिजिटल हिशोब वही**
+### **Digital Hishob-Khata**
+*सोपी, विश्वासू आणि आधुनिक कौटुंबिक हिशोब नोंदवही*  
 *A production-grade, Marathi-first, mobile-first, offline-first digital accounting notebook designed for daily household expense and lending management.*
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare)](https://expensetracker-28i.pages.dev/)
