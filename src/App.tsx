@@ -148,7 +148,7 @@ export const App: React.FC = () => {
             />
           )}
 
-          <main className="flex-1 p-3 sm:p-4 overflow-x-hidden">
+          <main className="flex-1 p-3 sm:p-4 pb-28 sm:pb-24 overflow-x-hidden">
             <Routes>
               <Route
                 path="/"

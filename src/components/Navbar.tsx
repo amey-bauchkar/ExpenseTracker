@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd }) => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#1D2128]/95 backdrop-blur border-t border-[#E7E1D3] dark:border-[#2E3541] safe-bottom shadow-lg transition-colors">
-      <div className="flex items-center justify-around max-w-lg mx-auto h-16 px-1 relative">
+      <div className="grid grid-cols-5 items-center max-w-lg mx-auto h-16 px-1 relative">
         {/* 1. Home */}
         <NavLink to="/" end className={navItemClass}>
           <Home className="w-5 h-5 mb-1 shrink-0" />
@@ -36,16 +36,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd }) => {
           </span>
         </NavLink>
 
-        {/* 3. Central Big + Button */}
-        <div className="flex flex-col items-center justify-center px-1">
+        {/* 3. Central Big + Button (नोंद करा) */}
+        <div className="flex flex-col items-center justify-center h-full relative">
           <button
             onClick={onOpenQuickAdd}
-            className="w-13 h-13 sm:w-14 sm:h-14 -mt-5 rounded-full bg-teal-700 hover:bg-teal-800 text-white flex items-center justify-center shadow-lg border-4 border-[#FBF8F1] dark:border-[#14171C] active:scale-90 transition-transform"
+            className="w-14 h-14 -mt-6 rounded-full bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white flex items-center justify-center shadow-xl border-4 border-white dark:border-[#1D2128] active:scale-90 transition-all shrink-0 cursor-pointer"
             aria-label={t('nav.add')}
           >
-            <Plus className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]" />
+            <Plus className="w-7 h-7 stroke-[2.5]" />
           </button>
-          <span className="text-[10px] sm:text-[11px] font-bold text-teal-800 dark:text-teal-300 mt-0.5 leading-tight">
+          <span className="text-[10px] sm:text-[11px] font-bold text-teal-800 dark:text-teal-300 mt-0.5 leading-tight text-center truncate max-w-[64px]">
             {t('nav.add')}
           </span>
         </div>
