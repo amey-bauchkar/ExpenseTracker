@@ -10,6 +10,7 @@ import {
   User,
   Check,
   AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { Account, Category, Person, Transaction } from '../domain/types';
 import { formatCurrency, toPaise, toRupees } from '../domain/money';
@@ -48,6 +49,8 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   const [categoryId, setCategoryId] = useState('');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isOpen || !transaction) return null;
 
@@ -69,33 +72,50 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   };
 
   const handleSaveEdit = async () => {
+    if (isSaving) return;
     const paise = toPaise(amountStr);
     if (paise <= 0) {
       setErrorMsg('रक्कम शून्यापेक्षा जास्त असावी');
       return;
     }
 
-    const updated = await updateTransaction(tx.id, {
-      amount_paise: paise,
-      local_date: dateStr,
-      reason: reasonStr.trim() || null,
-      note: noteStr.trim() || null,
-      account_id: accountId || null,
-      category_id: tx.type === 'expense' ? categoryId || null : null,
-    });
+    setIsSaving(true);
+    setErrorMsg(null);
+    try {
+      const updated = await updateTransaction(tx.id, {
+        amount_paise: paise,
+        local_date: dateStr,
+        reason: reasonStr.trim() || null,
+        note: noteStr.trim() || null,
+        account_id: accountId || null,
+        category_id: tx.type === 'expense' ? categoryId || null : null,
+      });
 
-    if (updated) {
-      onUpdated(updated);
-      setIsEditing(false);
-      onClose();
+      if (updated) {
+        onUpdated(updated);
+        setIsEditing(false);
+        onClose();
+      }
+    } catch (err: any) {
+      setErrorMsg('बदल जतन करताना त्रुटी आली: ' + (err?.message || 'डेटाबेस एरर'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    await softDeleteTransaction(tx.id);
-    onDeleted(tx);
-    setShowConfirmDelete(false);
-    onClose();
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await softDeleteTransaction(tx.id);
+      onDeleted(tx);
+      setShowConfirmDelete(false);
+      onClose();
+    } catch (err: any) {
+      setErrorMsg('हटवताना त्रुटी आली: ' + (err?.message || 'डेटाबेस एरर'));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -313,13 +333,22 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="flex-1 py-2 bg-rose-600 text-white font-bold rounded-xl text-xs active:scale-95"
+                  disabled={isDeleting}
+                  className="flex-1 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-75 disabled:cursor-wait text-white font-bold rounded-xl text-xs active:scale-95 flex items-center justify-center gap-1.5"
                 >
-                  होय, हटवा (Confirm Delete)
+                  {isDeleting ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>हटवत आहे...</span>
+                    </>
+                  ) : (
+                    <span>होय, हटवा (Confirm Delete)</span>
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowConfirmDelete(false)}
+                  disabled={isDeleting}
                   className="flex-1 py-2 bg-white text-slate-700 border border-slate-300 font-bold rounded-xl text-xs"
                 >
                   रद्द करा
@@ -356,14 +385,25 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               <button
                 type="button"
                 onClick={handleSaveEdit}
-                className="flex-1 h-12 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                disabled={isSaving}
+                className="flex-1 h-12 rounded-xl bg-teal-700 hover:bg-teal-800 disabled:opacity-75 disabled:cursor-wait text-white font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >
-                <Check className="w-4 h-4" />
-                {t('common.save')}
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>बदल जतन करत आहे...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>{t('common.save')}</span>
+                  </>
+                )}
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
+                disabled={isSaving}
                 className="h-12 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-sm"
               >
                 {t('common.cancel')}

@@ -237,6 +237,85 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
         </button>
       </div>
 
+      {/* Active Filter Pills Bar */}
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 p-2.5 rounded-2xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/60 animate-in fade-in duration-150">
+          <span className="text-[11px] font-bold text-teal-900 dark:text-teal-200 mr-1 flex items-center gap-1 shrink-0">
+            <Filter className="w-3.5 h-3.5 text-teal-700" />
+            सक्रिय:
+          </span>
+
+          {selectedType !== 'all' && (
+            <button
+              onClick={() => setSelectedType('all')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-white dark:bg-[#1D2128] text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 hover:bg-teal-100 active:scale-95"
+            >
+              <span>{t(`types.${selectedType}`)}</span>
+              <X className="w-3 h-3 text-slate-500 hover:text-slate-900" />
+            </button>
+          )}
+
+          {selectedAccountId !== 'all' && (
+            <button
+              onClick={() => setSelectedAccountId('all')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-white dark:bg-[#1D2128] text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 hover:bg-teal-100 active:scale-95"
+            >
+              <span>{accounts.find((a) => a.id === selectedAccountId)?.name || 'खाते'}</span>
+              <X className="w-3 h-3 text-slate-500 hover:text-slate-900" />
+            </button>
+          )}
+
+          {selectedCategoryId !== 'all' && (
+            <button
+              onClick={() => setSelectedCategoryId('all')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-white dark:bg-[#1D2128] text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 hover:bg-teal-100 active:scale-95"
+            >
+              <span>{categories.find((c) => c.id === selectedCategoryId)?.name_mr || 'वर्गवारी'}</span>
+              <X className="w-3 h-3 text-slate-500 hover:text-slate-900" />
+            </button>
+          )}
+
+          {selectedPersonId !== 'all' && (
+            <button
+              onClick={() => setSelectedPersonId('all')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-white dark:bg-[#1D2128] text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 hover:bg-teal-100 active:scale-95"
+            >
+              <span>{people.find((p) => p.id === selectedPersonId)?.name || 'व्यक्ती'}</span>
+              <X className="w-3 h-3 text-slate-500 hover:text-slate-900" />
+            </button>
+          )}
+
+          {dateRangePreset !== 'all' && (
+            <button
+              onClick={() => {
+                setDateRangePreset('all');
+                setCustomStartDate('');
+                setCustomEndDate('');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-white dark:bg-[#1D2128] text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 hover:bg-teal-100 active:scale-95"
+            >
+              <span>
+                {dateRangePreset === 'today'
+                  ? 'आज'
+                  : dateRangePreset === 'week'
+                  ? '७ दिवस'
+                  : dateRangePreset === 'month'
+                  ? 'चालू महिना'
+                  : 'कस्टम तारीख'}
+              </span>
+              <X className="w-3 h-3 text-slate-500 hover:text-slate-900" />
+            </button>
+          )}
+
+          <button
+            onClick={resetFilters}
+            className="text-xs font-black text-rose-700 dark:text-rose-400 hover:underline ml-auto pl-1"
+          >
+            सर्व काढा (Clear All)
+          </button>
+        </div>
+      )}
+
       {/* Export Buttons Header */}
       <div className="flex items-center justify-between px-1">
         <span className="text-xs font-bold text-[#5B6372] dark:text-[#8B949E]">

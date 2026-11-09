@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useTranslation } from 'react-i18next';
 import { db } from './db/database';
@@ -12,6 +12,7 @@ import {
 import { Header } from './components/Header';
 import { Navbar } from './components/Navbar';
 import { QuickAddModal } from './components/QuickAddModal';
+import { QuickAddTypeSelector } from './components/QuickAddTypeSelector';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
 import { UndoToast } from './components/UndoToast';
 import { PinLockScreen } from './components/PinLockScreen';
@@ -23,12 +24,14 @@ import { SettingsPage } from './pages/SettingsPage';
 import { restoreTransaction, softDeleteTransaction } from './db/repository';
 import { syncEngine } from './sync/syncEngine';
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const { i18n } = useTranslation();
+  const navigate = useNavigate();
   const [isDbReady, setIsDbReady] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   // Modal states
+  const [isTypeSelectorOpen, setIsTypeSelectorOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddType, setQuickAddType] = useState<TransactionType>('expense');
   const [quickAddPersonId, setQuickAddPersonId] = useState<string | undefined>();
@@ -165,126 +168,144 @@ export const App: React.FC = () => {
   }
 
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-[#FBF8F1] dark:bg-[#14171C] text-[#1F2430] dark:text-[#E6EDF3] flex flex-col font-devanagari transition-colors">
-        {/* Mobile-first Container with desktop centering */}
-        <div className="w-full max-w-lg mx-auto flex-1 flex flex-col min-h-screen relative shadow-sm border-x border-[#E7E1D3]/50 dark:border-[#2E3541]/50">
-          <Header />
+    <div className="min-h-screen bg-[#FBF8F1] dark:bg-[#14171C] text-[#1F2430] dark:text-[#E6EDF3] flex flex-col font-devanagari transition-colors">
+      {/* Mobile-first Container with desktop centering */}
+      <div className="w-full max-w-lg mx-auto flex-1 flex flex-col min-h-screen relative shadow-sm border-x border-[#E7E1D3]/50 dark:border-[#2E3541]/50">
+        <Header />
 
-          {/* Toast Notification */}
-          {toastMessage && undoAction && (
-            <UndoToast
-              message={toastMessage}
-              onUndo={undoAction}
-              onClose={() => setToastMessage(null)}
+        {/* Toast Notification */}
+        {toastMessage && undoAction && (
+          <UndoToast
+            message={toastMessage}
+            onUndo={undoAction}
+            onClose={() => setToastMessage(null)}
+          />
+        )}
+
+        <main className="flex-1 p-3 sm:p-4 pb-28 sm:pb-24 overflow-x-hidden">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <DashboardPage
+                  accounts={accounts}
+                  categories={categories}
+                  people={people}
+                  transactions={transactions}
+                  settings={defaultSettings}
+                  onOpenQuickAdd={() => setIsTypeSelectorOpen(true)}
+                  onSelectTransaction={(tx) => setSelectedTxForDetail(tx)}
+                />
+              }
             />
-          )}
+            <Route
+              path="/history"
+              element={
+                <HistoryPage
+                  accounts={accounts}
+                  categories={categories}
+                  people={people}
+                  transactions={transactions}
+                  settings={defaultSettings}
+                  onSelectTransaction={(tx) => setSelectedTxForDetail(tx)}
+                />
+              }
+            />
+            <Route
+              path="/people"
+              element={
+                <PeoplePage
+                  people={people}
+                  transactions={transactions}
+                  settings={defaultSettings}
+                  onOpenQuickAddWithPerson={(personId, mode, loanId) =>
+                    handleOpenQuickAdd(mode, personId, loanId)
+                  }
+                  onSelectTransaction={(tx) => setSelectedTxForDetail(tx)}
+                />
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ReportsPage
+                  accounts={accounts}
+                  categories={categories}
+                  people={people}
+                  transactions={transactions}
+                  settings={defaultSettings}
+                />
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <SettingsPage
+                  accounts={accounts}
+                  categories={categories}
+                  transactions={transactions}
+                  settings={defaultSettings}
+                  onRefreshData={() => {}}
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
 
-          <main className="flex-1 p-3 sm:p-4 pb-28 sm:pb-24 overflow-x-hidden">
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <DashboardPage
-                    accounts={accounts}
-                    categories={categories}
-                    people={people}
-                    transactions={transactions}
-                    settings={defaultSettings}
-                    onOpenQuickAdd={() => handleOpenQuickAdd('expense')}
-                    onSelectTransaction={(tx) => setSelectedTxForDetail(tx)}
-                  />
-                }
-              />
-              <Route
-                path="/history"
-                element={
-                  <HistoryPage
-                    accounts={accounts}
-                    categories={categories}
-                    people={people}
-                    transactions={transactions}
-                    settings={defaultSettings}
-                    onSelectTransaction={(tx) => setSelectedTxForDetail(tx)}
-                  />
-                }
-              />
-              <Route
-                path="/people"
-                element={
-                  <PeoplePage
-                    people={people}
-                    transactions={transactions}
-                    settings={defaultSettings}
-                    onOpenQuickAddWithPerson={(personId, mode, loanId) =>
-                      handleOpenQuickAdd(mode, personId, loanId)
-                    }
-                    onSelectTransaction={(tx) => setSelectedTxForDetail(tx)}
-                  />
-                }
-              />
-              <Route
-                path="/reports"
-                element={
-                  <ReportsPage
-                    accounts={accounts}
-                    categories={categories}
-                    people={people}
-                    transactions={transactions}
-                    settings={defaultSettings}
-                  />
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <SettingsPage
-                    accounts={accounts}
-                    categories={categories}
-                    transactions={transactions}
-                    settings={defaultSettings}
-                    onRefreshData={() => {}}
-                  />
-                }
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
+        {/* Bottom Navigation */}
+        <Navbar onOpenQuickAdd={() => setIsTypeSelectorOpen(true)} />
 
-          {/* Bottom Navigation */}
-          <Navbar onOpenQuickAdd={() => handleOpenQuickAdd('expense')} />
+        {/* Quick Add Type Selector Sheet (खर्च / जमा / उधारी / हस्तांतर) */}
+        <QuickAddTypeSelector
+          isOpen={isTypeSelectorOpen}
+          onClose={() => setIsTypeSelectorOpen(false)}
+          onSelectType={(type) => {
+            setIsTypeSelectorOpen(false);
+            handleOpenQuickAdd(type);
+          }}
+        />
 
-          {/* Quick Add Modal */}
-          <QuickAddModal
-            isOpen={isQuickAddOpen}
-            onClose={() => setIsQuickAddOpen(false)}
-            accounts={accounts}
-            categories={categories}
-            people={people}
-            transactions={transactions}
-            onSaved={handleTransactionSaved}
-            initialType={quickAddType}
-            initialPersonId={quickAddPersonId}
-            initialLoanId={quickAddLoanId}
-          />
+        {/* Quick Add Modal */}
+        <QuickAddModal
+          isOpen={isQuickAddOpen}
+          onClose={() => setIsQuickAddOpen(false)}
+          accounts={accounts}
+          categories={categories}
+          people={people}
+          transactions={transactions}
+          onSaved={handleTransactionSaved}
+          onViewTransactions={() => navigate('/history')}
+          initialType={quickAddType}
+          initialPersonId={quickAddPersonId}
+          initialLoanId={quickAddLoanId}
+          digits={defaultSettings.digits}
+        />
 
-          {/* Transaction Detail Modal */}
-          <TransactionDetailModal
-            isOpen={Boolean(selectedTxForDetail)}
-            onClose={() => setSelectedTxForDetail(null)}
-            transaction={selectedTxForDetail}
-            accounts={accounts}
-            categories={categories}
-            people={people}
-            onDeleted={handleTransactionDeleted}
-            onUpdated={() => {
-              setSelectedTxForDetail(null);
-              setToastMessage('नोंद बदलली गेली');
-            }}
-            digits={defaultSettings.digits}
-          />
-        </div>
+        {/* Transaction Detail Modal */}
+        <TransactionDetailModal
+          isOpen={Boolean(selectedTxForDetail)}
+          onClose={() => setSelectedTxForDetail(null)}
+          transaction={selectedTxForDetail}
+          accounts={accounts}
+          categories={categories}
+          people={people}
+          onDeleted={handleTransactionDeleted}
+          onUpdated={() => {
+            setSelectedTxForDetail(null);
+            setToastMessage('नोंद बदलली गेली');
+          }}
+          digits={defaultSettings.digits}
+        />
       </div>
+    </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 };
