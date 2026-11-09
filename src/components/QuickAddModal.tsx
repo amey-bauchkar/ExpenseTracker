@@ -120,8 +120,13 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
 
       if (initialPersonId) {
         setSelectedPersonId(initialPersonId);
+        setShowAddPersonInput(false);
       } else if (people.length > 0) {
         setSelectedPersonId(people[0].id);
+        setShowAddPersonInput(false);
+      } else {
+        setSelectedPersonId('');
+        setShowAddPersonInput(true);
       }
 
       if (initialLoanId) {
@@ -365,13 +370,31 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
     }
 
     // Standard transactions (expense, income, lend, transfer)
-    if (effectiveType === 'lend' && !selectedPersonId) {
-      setErrorMessage(
-        i18n.language === 'mr'
-          ? 'कृपया कोणाला उधारी दिली ती व्यक्ती निवडा'
-          : 'Please select a person to give loan'
-      );
-      return;
+    let lendPersonId = selectedPersonId;
+    if (effectiveType === 'lend') {
+      if (!lendPersonId && newPersonName.trim()) {
+        try {
+          const created = await createPerson({
+            user_id: DEFAULT_USER_ID,
+            name: newPersonName.trim(),
+            phone: null,
+            note: null,
+          });
+          lendPersonId = created.id;
+          setSelectedPersonId(created.id);
+        } catch (e: any) {
+          console.error('Failed to auto-create person:', e);
+        }
+      }
+
+      if (!lendPersonId) {
+        setErrorMessage(
+          i18n.language === 'mr'
+            ? 'कृपया कोणाला उधारी दिली त्या व्यक्तीचे नाव टाका'
+            : 'Please enter a person name'
+        );
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -387,7 +410,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
         account_id: selectedAccountId,
         to_account_id: effectiveType === 'transfer' ? selectedToAccountId : null,
         category_id: effectiveType === 'expense' ? selectedCategoryId : null,
-        person_id: effectiveType === 'lend' ? selectedPersonId : null,
+        person_id: effectiveType === 'lend' ? lendPersonId : null,
         counterparty_text:
           effectiveType === 'income' ? counterpartyText.trim() || reason.trim() : null,
         loan_id: null,

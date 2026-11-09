@@ -29,7 +29,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({
             className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl flex items-center gap-1 active:scale-95 transition-transform"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            रद्द करा (Undo)
+            पूर्ववत करा (Undo)
           </button>
         </div>
       </div>

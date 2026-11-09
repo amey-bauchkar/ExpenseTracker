@@ -118,6 +118,7 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({
       onClick={onClick}
       role="button"
       tabIndex={0}
+      data-testid="transaction-item"
       className="flex items-center justify-between p-3.5 bg-white dark:bg-[#1D2128] hover:bg-[#FBF8F1] dark:hover:bg-[#252B34] border border-[#E7E1D3] dark:border-[#2E3541] rounded-2xl active:scale-[0.99] transition-all cursor-pointer shadow-2xs"
     >
       <div className="flex items-center gap-3 min-w-0">
